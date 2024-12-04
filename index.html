@@ -113,7 +113,33 @@
                 <div class="max-w-7xl mx-auto">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                         <div class="order-2 md:order-1">
-                            <img src="assets/images/methode.jpg" alt="Notre méthode d'apprentissage" class="rounded-2xl shadow-2xl">
+                            <!-- TradingView Widget BEGIN -->
+                            <div class="tradingview-widget-container">
+                                <div id="tradingview_bitcoin"></div>
+                                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                                <script type="text/javascript">
+                                new TradingView.widget({
+                                    "width": "100%",
+                                    "height": 400,
+                                    "symbol": "BINANCE:BTCUSDT",
+                                    "interval": "D",
+                                    "timezone": "Europe/Paris",
+                                    "theme": "dark",
+                                    "style": "1",
+                                    "locale": "fr",
+                                    "toolbar_bg": "#f1f3f6",
+                                    "enable_publishing": false,
+                                    "hide_top_toolbar": true,
+                                    "hide_side_toolbar": true,
+                                    "hide_legend": true,
+                                    "save_image": false,
+                                    "container_id": "tradingview_bitcoin",
+                                    "toolbar_bg": "#1a202c",
+                                    "backgroundColor": "#1a202c"
+                                });
+                                </script>
+                            </div>
+                            <!-- TradingView Widget END -->
                         </div>
                         <div class="order-1 md:order-2">
                             <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Une Méthode Éprouvée</h2>
