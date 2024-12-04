@@ -2,8 +2,10 @@
     position: fixed;
     width: 100%;
     height: 100%;
-    background-color: #0f172a;
+    top: 0;
+    left: 0;
     z-index: 1;
+    pointer-events: none;
 }
 
 .content {
@@ -45,4 +47,91 @@
 
 .completed {
     background: #38A169; /* Couleur pour les modules complétés */
+}
+
+/* Hero Section Background */
+#hero-section {
+    position: relative;
+    background-color: #111827; /* bg-gray-900 */
+    isolation: isolate; /* Crée un nouveau contexte d'empilement */
+}
+
+#hero-section #particles-js {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    opacity: 0.5;
+}
+
+/* Assurez-vous que le contenu du hero est au-dessus des particules */
+#hero-section > div {
+    position: relative;
+    z-index: 1;
+}
+
+/* Reste du site */
+.content > *:not(#hero-section) {
+    position: relative;
+    z-index: 2;
+    background-color: #111827; /* bg-gray-900 */
+}
+
+/* Animations */
+.hover-scale {
+    transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3b82f6;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+}
+
+/* Glassmorphism */
+.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Number badges animation */
+.number-badge {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Assurez-vous que les sections ont un fond semi-transparent */
+section {
+    position: relative;
+    background-color: rgba(17, 24, 39, 0.95);
 }
