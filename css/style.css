@@ -88,7 +88,13 @@
     transform: scale(1.05);
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar for Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #2563eb #1a1a1a;
+}
+
+/* Custom Scrollbar for Webkit browsers (Chrome, Safari, etc) */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -98,12 +104,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #3b82f6;
+    background: #2563eb;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #2563eb;
+    background: #1d4ed8;
 }
 
 /* Glassmorphism */
@@ -134,4 +140,9 @@
 section {
     position: relative;
     background-color: rgba(17, 24, 39, 0.95);
+}
+
+.scrollable-element {
+    scrollbar-width: thin;
+    scrollbar-color: #2563eb #1a1a1a;
 }
