@@ -146,3 +146,11 @@ section {
     scrollbar-width: thin;
     scrollbar-color: #2563eb #1a1a1a;
 }
+
+/* Footer opaque */
+footer {
+    position: relative;
+    z-index: 2;
+    background-color: rgb(28, 28, 28) !important; /* Vrai gris anthracite */
+    border-top: 1px solid rgb(45, 45, 45); /* Bordure en gris légèrement plus clair */
+}
