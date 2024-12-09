@@ -1,96 +1,179 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <title>Calculateur de Position Trading | Fimaris</title>
+    <meta name="description" content="Calculez facilement la taille de vos positions en trading de cryptomonnaies avec notre calculateur en ligne gratuit.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Calculateur de position en trading avec graphique">
-    <title>Calculateur de Position Trading avec Limites</title>
+    <link rel="stylesheet" href="../../css/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-900 text-white">
-    <main class="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 class="text-4xl font-bold mb-6 text-center">Calculateur de Position Trading</h1>
+<body class="bg-gray-900">
+    <!-- ParticlesJS Container -->
+    <div id="particles-js" class="fixed inset-0 opacity-50" aria-hidden="true"></div>
 
-        <div class="flex flex-col lg:flex-row lg:space-x-8 w-full max-w-5xl">
-            <!-- Formulaire -->
-            <div class="w-full lg:w-1/2 bg-gray-800 p-6 rounded-lg shadow-lg">
-                <form id="positionCalculator" class="space-y-4">
-                    <div>
-                        <label for="capital" class="block text-sm font-medium mb-1">Capital total ($)</label>
-                        <input type="number" id="capital" step="0.01" class="w-full bg-gray-700 text-white rounded-lg p-2" placeholder="Ex : 10000" required>
+    <div class="relative">
+        <header>
+            <nav class="fixed w-full z-50 transition-all duration-300" id="navbar" aria-label="Navigation principale">
+                <div class="max-w-7xl mx-auto px-4">
+                    <div class="flex justify-between items-center h-16">
+                        <div class="flex items-center">
+                            <a href="../../index.html" class="text-2xl font-bold text-white" aria-label="Accueil Fimaris">Fimaris</a>
+                        </div>
+                        <div class="hidden md:flex items-center space-x-8" role="navigation">
+                            <a href="../../index.html" class="text-gray-200 hover:text-white">Accueil</a>
+                            <a href="../index.html" class="text-gray-200 hover:text-white">Formation</a>
+                            <a href="../../index.html#contact" class="text-gray-200 hover:text-white">Contact</a>
+                        </div>
                     </div>
-                    <div>
-                        <label for="riskPercentage" class="block text-sm font-medium mb-1">Risque par trade (%)</label>
-                        <input type="number" id="riskPercentage" step="0.01" class="w-full bg-gray-700 text-white rounded-lg p-2" placeholder="Ex : 1" required>
-                    </div>
-                    <div>
-                        <label for="entryPrice" class="block text-sm font-medium mb-1">Prix d'entrée ($)</label>
-                        <input type="number" id="entryPrice" step="0.0001" class="w-full bg-gray-700 text-white rounded-lg p-2" placeholder="Ex : 54.05" required>
-                    </div>
-                    <div>
-                        <label for="stopLoss" class="block text-sm font-medium mb-1">Stop Loss ($)</label>
-                        <input type="number" id="stopLoss" step="0.0001" class="w-full bg-gray-700 text-white rounded-lg p-2" placeholder="Ex : 52.05" required>
-                    </div>
-                    <div>
-                        <label for="riskReward" class="block text-sm font-medium mb-1">Ratio Risque/Rendement (R:R)</label>
-                        <input type="number" id="riskReward" step="0.01" class="w-full bg-gray-700 text-white rounded-lg p-2" placeholder="Ex : 2.5">
-                    </div>
-                    <div>
-                        <label for="tradingStyle" class="block text-sm font-medium mb-1">Style de trading</label>
-                        <select id="tradingStyle" class="w-full bg-gray-700 text-white rounded-lg p-2">
-                            <option value="scalping">Scalping</option>
-                            <option value="daytrading">Day Trading</option>
-                            <option value="swing">Swing Trading</option>
-                        </select>
-                    </div>
+                </div>
+            </nav>
+        </header>
+    </div>
 
-                    <button type="submit" class="w-full bg-blue-600 py-2 rounded-lg hover:bg-blue-700 transition">
-                        Calculer
-                    </button>
-                </form>
-            </div>
+    <main class="pt-0 pb-12 md:pt-8 md:pb-20" role="main">
+        <div class="flex flex-col items-center justify-center min-h-screen p-4">
+            <h1 class="text-5xl md:text-7xl font-bold text-white mb-8 text-center">Calculateur de Position Trading</h1>
 
-            <!-- Résultats -->
-            <div class="w-full lg:w-1/2 bg-gray-800 p-6 rounded-lg shadow-lg">
-                <canvas id="tradeChart"></canvas>
-                <div id="results" class="mt-6">
-                    <ul class="space-y-2">
-                        <li class="flex justify-between items-center border-b border-gray-600 pb-2">
-                            <span class="text-gray-400">Montant risqué :</span>
-                            <span id="riskAmount" class="text-blue-400 font-semibold">0 $</span>
-                        </li>
-                        <li class="flex justify-between items-center border-b border-gray-600 pb-2">
-                            <span class="text-gray-400">Distance au stop-loss :</span>
-                            <span id="stopDistance" class="text-blue-400 font-semibold">0 $</span>
-                        </li>
-                        <li class="flex justify-between items-center border-b border-gray-600 pb-2">
-                            <span class="text-gray-400">Taille de la position :</span>
-                            <span id="positionSize" class="text-blue-400 font-semibold">0 unités</span>
-                        </li>
-                        <li class="flex justify-between items-center border-b border-gray-600 pb-2">
-                            <span class="text-gray-400">Montant mobilisé :</span>
-                            <span id="mobilizedAmount" class="text-yellow-400 font-semibold">0 $</span>
-                        </li>
-                        <li class="flex justify-between items-center border-b border-gray-600 pb-2">
-                            <span class="text-gray-400">Nombre de tokens achetés :</span>
-                            <span id="numberOfTokens" class="text-yellow-400 font-semibold">0</span>
-                        </li>
-                        <li class="flex justify-between items-center border-b border-gray-600 pb-2">
-                            <span class="text-gray-400">Take Profit :</span>
-                            <span id="takeProfit" class="text-green-400 font-semibold">0 $</span>
-                        </li>
-                        <li class="flex justify-between items-center border-b border-gray-600 pb-2">
-                            <span class="text-gray-400">Gains prévus :</span>
-                            <span id="expectedProfit" class="text-green-400 font-semibold">0 $</span>
-                        </li>
-                    </ul>
+            <div class="flex flex-col lg:flex-row lg:space-x-8 w-full max-w-5xl">
+                <!-- Formulaire -->
+                <div class="w-full lg:w-1/2 bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <form id="positionCalculator" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Capital -->
+                            <div>
+                                <label for="capital" class="block text-white mb-2">Capital total ($)</label>
+                                <input type="number" id="capital" name="capital" class="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Ex: 10000">
+                            </div>
+                            
+                            <!-- Risque en pourcentage -->
+                            <div>
+                                <label for="riskPercentage" class="block text-white mb-2">Risque par trade (%)</label>
+                                <input type="number" id="riskPercentage" name="riskPercentage" class="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Ex: 1">
+                            </div>
+
+                            <!-- Prix d'entrée -->
+                            <div>
+                                <label for="entryPrice" class="block text-white mb-2">Prix d'entrée ($)</label>
+                                <input type="number" id="entryPrice" name="entryPrice" step="0.0001" class="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Ex: 54.05">
+                            </div>
+
+                            <!-- Stop Loss -->
+                            <div>
+                                <label for="stopLoss" class="block text-white mb-2">Stop Loss ($)</label>
+                                <input type="number" id="stopLoss" name="stopLoss" step="0.0001" class="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Ex: 52.05">
+                            </div>
+
+                            <!-- Ratio Risque/Rendement -->
+                            <div>
+                                <label for="riskReward" class="block text-white mb-2">Ratio Risque/Rendement (R:R)</label>
+                                <input type="number" id="riskReward" name="riskReward" step="0.01" min="0.1" class="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Ex: 2.5">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="tradingStyle" class="block text-white mb-1">Style de trading</label>
+                            <select id="tradingStyle" class="w-full bg-gray-700 text-white rounded-lg p-2">
+                                <option value="scalping">Scalping</option>
+                                <option value="daytrading">Day Trading</option>
+                                <option value="swing">Swing Trading</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                            Calculer la position
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Résultats -->
+                <div class="w-full lg:w-1/2 bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <canvas id="tradeChart"></canvas>
+                    <div id="results" class="mt-6">
+                        <ul class="space-y-2">
+                            <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                                <span class="text-gray-400">Montant risqué :</span>
+                                <span id="riskAmount" class="text-blue-400 font-semibold">0 $</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                                <span class="text-gray-400">Distance au stop-loss :</span>
+                                <span id="stopDistance" class="text-blue-400 font-semibold">0 $</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                                <span class="text-gray-400">Taille de la position :</span>
+                                <span id="positionSize" class="text-blue-400 font-semibold">0 unités</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                                <span class="text-gray-400">Montant mobilisé :</span>
+                                <span id="mobilizedAmount" class="text-yellow-400 font-semibold">0 $</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                                <span class="text-gray-400">Nombre de tokens achetés :</span>
+                                <span id="numberOfTokens" class="text-yellow-400 font-semibold">0</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                                <span class="text-gray-400">Take Profit :</span>
+                                <span id="takeProfit" class="text-green-400 font-semibold">0 $</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                                <span class="text-gray-400">Gains prévus :</span>
+                                <span id="expectedProfit" class="text-green-400 font-semibold">0 $</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- Footer -->
+    <footer class="bg-gray-950 py-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <!-- Grid container -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <!-- Logo et description -->
+                <div class="col-span-1 md:col-span-2">
+                    <h3 class="text-2xl font-bold text-white mb-4">Fimaris</h3>
+                    <p class="text-gray-400 mb-4">Formation au trading et à l'analyse technique des cryptomonnaies. Apprenez à trader de manière méthodique et professionnelle.</p>
+                </div>
+                
+                <!-- Liens rapides -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Liens rapides</h4>
+                    <ul class="space-y-2">
+                        <li><a href="../../index.html" class="text-gray-400 hover:text-white transition-colors">Accueil</a></li>
+                        <li><a href="../index.html" class="text-gray-400 hover:text-white transition-colors">Formation</a></li>
+                        <li><a href="../../index.html#contact" class="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Légal -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Informations légales</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Mentions légales</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Politique de confidentialité</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">CGV</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Séparateur -->
+            <div class="border-t border-gray-800"></div>
+            
+            <!-- Copyright -->
+            <div class="pt-8 text-center">
+                <p class="text-gray-400">&copy; 2023 Fimaris. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
     <script>
+        let tradeChart;
+    
         document.getElementById('positionCalculator').addEventListener('submit', function (e) {
             e.preventDefault();
     
@@ -147,15 +230,62 @@
             document.getElementById('numberOfTokens').textContent = `${Math.floor(positionSize)}`;
             document.getElementById('takeProfit').textContent = `${takeProfit.toFixed(2)} $`;
             document.getElementById('expectedProfit').textContent = `${adjustedExpectedProfit.toFixed(2)} $`;
+    
+            // Mise à jour du graphique
+            updateChart(stopLoss, entryPrice, takeProfit);
+        });
+    
+        function updateChart(stopLoss, entryPrice, takeProfit) {
+            const ctx = document.getElementById('tradeChart').getContext('2d');
+    
+            // Si un graphique existe déjà, le détruire avant d'en recréer un
+            if (tradeChart) {
+                tradeChart.destroy();
+            }
+    
+            // Initialisation du graphique
+            tradeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Stop Loss', 'Prix d\'entrée', 'Take Profit'],
+                    datasets: [
+                        {
+                            label: 'Niveaux de trading',
+                            data: [stopLoss, entryPrice, takeProfit],
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointBackgroundColor: ['red', 'white', 'green'], // Couleurs pour SL, entrée, TP
+                            pointRadius: 5,
+                        },
+                    ],
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: { display: true, text: 'Niveaux', color: 'white' },
+                        },
+                        y: {
+                            display: true,
+                            title: { display: true, text: 'Prix ($)', color: 'white' },
+                        },
+                    },
+                },
+            });
+        }
+    
+        window.addEventListener('scroll', function() {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('bg-blue-800', 'backdrop-blur-sm', 'shadow-lg');
+            } else {
+                nav.classList.remove('bg-blue-800', 'backdrop-blur-sm', 'shadow-lg');
+            }
         });
     </script>
-    
-    
-    
-    
-    
-    
-    
-    
 </body>
 </html>
