@@ -93,7 +93,7 @@
     <script>
         document.getElementById('positionCalculator').addEventListener('submit', function (e) {
             e.preventDefault();
-
+    
             // Récupération des valeurs
             const capital = parseFloat(document.getElementById('capital').value);
             const riskPercentage = parseFloat(document.getElementById('riskPercentage').value);
@@ -101,46 +101,61 @@
             const stopLoss = parseFloat(document.getElementById('stopLoss').value);
             const riskReward = parseFloat(document.getElementById('riskReward').value);
             const tradingStyle = document.getElementById('tradingStyle').value;
-
+    
             if (isNaN(capital) || isNaN(riskPercentage) || isNaN(entryPrice) || isNaN(stopLoss) || isNaN(riskReward)) {
                 alert('Veuillez remplir tous les champs correctement.');
                 return;
             }
-
-            // Calcul de la distance au SL
-            const stopDistance = Math.abs(entryPrice - stopLoss);
-
-            // Ajustement du SL selon le style de trading
-            let adjustedStopDistance = stopDistance;
+    
+            // Distance entre l'entrée et le SL
+            let stopDistance = Math.abs(entryPrice - stopLoss);
+    
+            // Ajustement SL selon le style
             if (tradingStyle === "scalping") {
-                adjustedStopDistance = stopDistance * 0.5; // SL plus serré
+                stopDistance *= 0.5; // SL plus serré
             } else if (tradingStyle === "swing") {
-                adjustedStopDistance = stopDistance * 1.5; // SL plus large
+                stopDistance *= 1.5; // SL plus large
             }
-
-            // Calculs principaux
-            const riskAmount = capital * (riskPercentage / 100); // Montant risqué
-            let positionSize = riskAmount / adjustedStopDistance; // Taille de position initiale
-            let mobilizedAmount = positionSize * entryPrice; // Montant mobilisé
-
-            // Vérification pour éviter de dépasser le capital total
-            if (mobilizedAmount > capital) {
-                positionSize = capital / entryPrice; // Taille de position ajustée
+    
+            // Calcul du Take-Profit basé sur le R:R
+            const takeProfit = entryPrice + stopDistance * riskReward;
+    
+            // Montant risqué configuré
+            const riskAmount = capital * (riskPercentage / 100);
+    
+            // Taille de position idéale
+            let positionSize = riskAmount / stopDistance;
+    
+            // Montant mobilisé initial
+            let mobilizedAmount = positionSize * entryPrice;
+    
+            // Limiter le montant mobilisé à 80 % du capital
+            const maxMobilizedAmount = capital * 0.8; // Par défaut, 80 % du capital
+            if (mobilizedAmount > maxMobilizedAmount) {
+                positionSize = maxMobilizedAmount / entryPrice; // Ajuste la taille de position
                 mobilizedAmount = positionSize * entryPrice; // Recalcul du montant mobilisé
             }
-
-            const takeProfit = entryPrice + adjustedStopDistance * riskReward;
-            const expectedProfit = positionSize * adjustedStopDistance * riskReward;
-
+    
+            // Recalcul des gains prévus pour respecter strictement le R:R
+            const adjustedExpectedProfit = riskAmount * riskReward;
+    
             // Affichage des résultats
             document.getElementById('riskAmount').textContent = `${riskAmount.toFixed(2)} $`;
-            document.getElementById('stopDistance').textContent = `${adjustedStopDistance.toFixed(4)} $`;
+            document.getElementById('stopDistance').textContent = `${stopDistance.toFixed(4)} $`;
             document.getElementById('positionSize').textContent = `${positionSize.toFixed(2)} unités`;
             document.getElementById('mobilizedAmount').textContent = `${mobilizedAmount.toFixed(2)} $`;
             document.getElementById('numberOfTokens').textContent = `${Math.floor(positionSize)}`;
             document.getElementById('takeProfit').textContent = `${takeProfit.toFixed(2)} $`;
-            document.getElementById('expectedProfit').textContent = `${expectedProfit.toFixed(2)} $`;
+            document.getElementById('expectedProfit').textContent = `${adjustedExpectedProfit.toFixed(2)} $`;
         });
     </script>
+    
+    
+    
+    
+    
+    
+    
+    
 </body>
 </html>
