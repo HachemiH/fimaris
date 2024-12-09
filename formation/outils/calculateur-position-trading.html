@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Calculateur de position en trading avec graphique">
-    <title>Calculateur de Position Trading avec Styles</title>
+    <title>Calculateur de Position Trading avec Limites</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -69,6 +69,14 @@
                             <span id="positionSize" class="text-blue-400 font-semibold">0 unités</span>
                         </li>
                         <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                            <span class="text-gray-400">Montant mobilisé :</span>
+                            <span id="mobilizedAmount" class="text-yellow-400 font-semibold">0 $</span>
+                        </li>
+                        <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                            <span class="text-gray-400">Nombre de tokens achetés :</span>
+                            <span id="numberOfTokens" class="text-yellow-400 font-semibold">0</span>
+                        </li>
+                        <li class="flex justify-between items-center border-b border-gray-600 pb-2">
                             <span class="text-gray-400">Take Profit :</span>
                             <span id="takeProfit" class="text-green-400 font-semibold">0 $</span>
                         </li>
@@ -83,42 +91,6 @@
     </main>
 
     <script>
-        // Initialisation du graphique
-        const ctx = document.getElementById('tradeChart').getContext('2d');
-        let tradeChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [
-                    {
-                        label: 'Niveaux de trading',
-                        data: [],
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        pointBackgroundColor: ['red', 'white', 'green'], // Couleurs pour SL, entrée, TP
-                        pointRadius: 5,
-                    },
-                ],
-            },
-            options: {
-                plugins: {
-                    legend: { display: false },
-                },
-                scales: {
-                    x: {
-                        display: true,
-                        title: { display: true, text: 'Niveaux', color: 'white' },
-                    },
-                    y: {
-                        display: true,
-                        title: { display: true, text: 'Prix ($)', color: 'white' },
-                    },
-                },
-            },
-        });
-
-        // Gestion du formulaire
         document.getElementById('positionCalculator').addEventListener('submit', function (e) {
             e.preventDefault();
 
@@ -146,9 +118,17 @@
                 adjustedStopDistance = stopDistance * 1.5; // SL plus large
             }
 
-            // Recalculs principaux
-            const riskAmount = capital * (riskPercentage / 100);
-            const positionSize = riskAmount / adjustedStopDistance;
+            // Calculs principaux
+            const riskAmount = capital * (riskPercentage / 100); // Montant risqué
+            let positionSize = riskAmount / adjustedStopDistance; // Taille de position initiale
+            let mobilizedAmount = positionSize * entryPrice; // Montant mobilisé
+
+            // Vérification pour éviter de dépasser le capital total
+            if (mobilizedAmount > capital) {
+                positionSize = capital / entryPrice; // Taille de position ajustée
+                mobilizedAmount = positionSize * entryPrice; // Recalcul du montant mobilisé
+            }
+
             const takeProfit = entryPrice + adjustedStopDistance * riskReward;
             const expectedProfit = positionSize * adjustedStopDistance * riskReward;
 
@@ -156,13 +136,10 @@
             document.getElementById('riskAmount').textContent = `${riskAmount.toFixed(2)} $`;
             document.getElementById('stopDistance').textContent = `${adjustedStopDistance.toFixed(4)} $`;
             document.getElementById('positionSize').textContent = `${positionSize.toFixed(2)} unités`;
+            document.getElementById('mobilizedAmount').textContent = `${mobilizedAmount.toFixed(2)} $`;
+            document.getElementById('numberOfTokens').textContent = `${Math.floor(positionSize)}`;
             document.getElementById('takeProfit').textContent = `${takeProfit.toFixed(2)} $`;
             document.getElementById('expectedProfit').textContent = `${expectedProfit.toFixed(2)} $`;
-
-            // Mise à jour du graphique
-            tradeChart.data.labels = ['Stop Loss', 'Prix d\'entrée', 'Take Profit'];
-            tradeChart.data.datasets[0].data = [stopLoss, entryPrice, takeProfit];
-            tradeChart.update();
         });
     </script>
 </body>
