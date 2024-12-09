@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Calculateur de position en trading avec ratio risque/rendement">
-    <title>Calculateur de Position Trading</title>
+    <title>Calculateur de Position Trading - Gains Prévisibles</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
 </head>
@@ -12,7 +12,6 @@
     <main class="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 class="text-4xl font-bold mb-6 text-center">Calculateur de Position Trading</h1>
 
-        <!-- Conteneur principal avec Flexbox -->
         <div class="flex flex-col lg:flex-row lg:space-x-8 w-full max-w-5xl">
             <!-- Formulaire -->
             <div class="w-full lg:w-1/2 bg-gray-800 p-6 rounded-lg shadow-lg">
@@ -33,32 +32,9 @@
                         <label for="stopLoss" class="block text-sm font-medium mb-1">Stop Loss ($)</label>
                         <input type="number" id="stopLoss" step="0.0001" class="w-full bg-gray-700 text-white rounded-lg p-2" placeholder="Ex : 52.05" required>
                     </div>
-
-                    <!-- Choix de priorité -->
                     <div>
-                        <label class="block text-sm font-medium mb-2">Choisissez une priorité :</label>
-                        <div class="flex items-center space-x-4">
-                            <div>
-                                <input type="radio" id="priorityRR" name="priority" value="RR" checked>
-                                <label for="priorityRR" class="text-sm text-gray-300">Prioriser R:R</label>
-                            </div>
-                            <div>
-                                <input type="radio" id="priorityTP" name="priority" value="TP">
-                                <label for="priorityTP" class="text-sm text-gray-300">Prioriser TP</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Champs R:R et TP -->
-                    <div class="flex space-x-4">
-                        <div class="w-1/2">
-                            <label for="riskReward" class="block text-sm font-medium mb-1">Ratio Risque/Rendement (R:R)</label>
-                            <input type="number" id="riskReward" step="0.01" min="0.1" class="w-full bg-gray-700 text-white rounded-lg p-2" placeholder="Ex : 2.5">
-                        </div>
-                        <div class="w-1/2">
-                            <label for="takeProfit" class="block text-sm font-medium mb-1">Take Profit ($)</label>
-                            <input type="number" id="takeProfit" step="0.0001" class="w-full bg-gray-700 text-white rounded-lg p-2" placeholder="Ex : 58.05">
-                        </div>
+                        <label for="riskReward" class="block text-sm font-medium mb-1">Ratio Risque/Rendement (R:R)</label>
+                        <input type="number" id="riskReward" step="0.01" class="w-full bg-gray-700 text-white rounded-lg p-2" placeholder="Ex : 2.5">
                     </div>
 
                     <button type="submit" class="w-full bg-blue-600 py-2 rounded-lg hover:bg-blue-700 transition">
@@ -80,18 +56,21 @@
                         <span id="stopDistance" class="text-blue-400 font-semibold">0 $</span>
                     </li>
                     <li class="flex justify-between items-center border-b border-gray-600 pb-2">
-                        <span class="text-gray-400">Distance au take-profit :</span>
-                        <span id="profitDistance" class="text-blue-400 font-semibold">0 $</span>
-                    </li>
-                    <li class="flex justify-between items-center border-b border-gray-600 pb-2">
-                        <span class="text-gray-400">Take Profit :</span>
-                        <span id="finalTakeProfit" class="text-blue-400 font-semibold">0 $</span>
-                    </li>
-                    <li class="flex justify-between items-center">
                         <span class="text-gray-400">Taille de la position :</span>
                         <span id="positionSize" class="text-blue-400 font-semibold">0 unités</span>
                     </li>
+                    <li class="flex justify-between items-center border-b border-gray-600 pb-2">
+                        <span class="text-gray-400">Mobilisation totale :</span>
+                        <span id="totalCapitalUsed" class="text-blue-400 font-semibold">0 $</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-400">Gains prévus :</span>
+                        <span id="expectedProfit" class="text-green-400 font-semibold">0 $</span>
+                    </li>
                 </ul>
+                <p id="warning" class="text-yellow-400 text-center mt-4 hidden">
+                    ⚠️ Attention : La taille de la position mobilise plus de 50 % de votre capital. Ajustez vos paramètres.
+                </p>
             </div>
         </div>
     </main>
@@ -105,43 +84,44 @@
             const riskPercentage = parseFloat(document.getElementById('riskPercentage').value);
             const entryPrice = parseFloat(document.getElementById('entryPrice').value);
             const stopLoss = parseFloat(document.getElementById('stopLoss').value);
-            const priorityRR = document.getElementById('priorityRR').checked;
             const riskReward = parseFloat(document.getElementById('riskReward').value);
-            const takeProfit = parseFloat(document.getElementById('takeProfit').value);
 
-            if (isNaN(capital) || isNaN(riskPercentage) || isNaN(entryPrice) || isNaN(stopLoss)) {
+            if (isNaN(capital) || isNaN(riskPercentage) || isNaN(entryPrice) || isNaN(stopLoss) || isNaN(riskReward)) {
                 alert("Veuillez remplir tous les champs correctement.");
                 return;
             }
 
-            // Calcul de la distance au stop-loss
-            const stopDistance = math.round(Math.abs(entryPrice - stopLoss), 3);
+            // Calculs
+            const stopDistance = math.round(Math.abs(entryPrice - stopLoss), 4);
+            const riskAmount = math.round(capital * (riskPercentage / 100), 2);
+            let positionSize = math.round(riskAmount / stopDistance, 2);
+            let totalCapitalUsed = math.round(positionSize * entryPrice, 2);
 
-            // Définir TP ou R:R selon la priorité
-            let finalTakeProfit = takeProfit;
-            let finalRiskReward = riskReward;
+            // Calcul des gains prévus (en fonction du R:R)
+            const profitDistance = math.round(stopDistance * riskReward, 4);
+            const expectedProfit = math.round(positionSize * profitDistance, 2);
 
-            if (priorityRR) {
-                // Calculer TP à partir de R:R
-                finalTakeProfit = math.round(entryPrice + (stopDistance * riskReward), 3);
-                document.getElementById('takeProfit').value = finalTakeProfit.toFixed(4);
-            } else {
-                // Calculer R:R à partir de TP
-                finalRiskReward = math.round((takeProfit - entryPrice) / stopDistance, 2);
-                document.getElementById('riskReward').value = finalRiskReward.toFixed(2);
+            // Limitation de la mobilisation à 50 % du capital
+            const maxCapitalUsage = capital * 0.5;
+            if (totalCapitalUsed > maxCapitalUsage) {
+                positionSize = math.round(maxCapitalUsage / entryPrice, 2);
+                totalCapitalUsed = math.round(positionSize * entryPrice, 2);
             }
 
-            // Calcul de la taille de position
-            const riskAmount = math.round(capital * (riskPercentage / 100), 3);
-            const positionSize = math.round(riskAmount / stopDistance, 3);
-            const profitDistance = math.round(finalTakeProfit - entryPrice, 3);
-
             // Affichage des résultats
-            document.getElementById('riskAmount').textContent = `${riskAmount.toFixed(3)} $`;
-            document.getElementById('stopDistance').textContent = `${stopDistance.toFixed(3)} $`;
-            document.getElementById('profitDistance').textContent = `${profitDistance.toFixed(3)} $`;
-            document.getElementById('finalTakeProfit').textContent = `${finalTakeProfit.toFixed(3)} $`;
-            document.getElementById('positionSize').textContent = `${positionSize.toFixed(3)} unités`;
+            document.getElementById('riskAmount').textContent = `${riskAmount.toFixed(2)} $`;
+            document.getElementById('stopDistance').textContent = `${stopDistance.toFixed(4)} $`;
+            document.getElementById('positionSize').textContent = `${positionSize.toFixed(2)} unités`;
+            document.getElementById('totalCapitalUsed').textContent = `${totalCapitalUsed.toFixed(2)} $`;
+            document.getElementById('expectedProfit').textContent = `${expectedProfit.toFixed(2)} $`;
+
+            // Gestion des avertissements
+            const warning = document.getElementById('warning');
+            if (totalCapitalUsed > maxCapitalUsage) {
+                warning.classList.remove('hidden');
+            } else {
+                warning.classList.add('hidden');
+            }
 
             document.getElementById('results').classList.remove('hidden');
         });
