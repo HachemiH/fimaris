@@ -126,16 +126,17 @@
 
     <!-- Script -->
     <script>
+        let cryptoData = []; // Stockage des données
+
         async function fetchCryptos() {
             const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50");
-            const data = await response.json();
-            updateTable(data);
+            cryptoData = await response.json();
+            updateTable(cryptoData);
         }
 
         function updateTable(data) {
             const tableBody = document.getElementById("crypto-table-body");
             tableBody.innerHTML = "";
-
             data.forEach((crypto, index) => {
                 const priceChangeClass = crypto.price_change_percentage_24h > 0 ? 'text-green-500' : 'text-red-500';
                 const row = `
@@ -152,44 +153,39 @@
             });
         }
 
-        function filterData(data) {
-            const marketCapFilter = document.getElementById("market-cap-filter").value;
-            const changeFilter = document.getElementById("change-filter").value;
-            const volumeFilter = document.getElementById("volume-filter").value;
+        function filterData() {
+            const marketCap = document.getElementById("market-cap-filter").value;
+            const change = document.getElementById("change-filter").value;
+            const volume = document.getElementById("volume-filter").value;
 
-            return data.filter(crypto => {
-                const marketCap = crypto.market_cap / 1e9; // Convert market cap to billions
-                const volume = crypto.total_volume / 1e6; // Convert volume to millions
+            const filteredData = cryptoData.filter((crypto) => {
+                const isCapValid =
+                    marketCap === "all" ||
+                    (marketCap === "large" && crypto.market_cap > 10e9) ||
+                    (marketCap === "mid" && crypto.market_cap >= 1e9 && crypto.market_cap <= 10e9) ||
+                    (marketCap === "small" && crypto.market_cap < 1e9);
 
-                return (
-                    (marketCapFilter === "all" || 
-                        (marketCapFilter === "large" && marketCap > 10) || 
-                        (marketCapFilter === "mid" && marketCap >= 1 && marketCap <= 10) || 
-                        (marketCapFilter === "small" && marketCap < 1)) &&
-                    (changeFilter === "all" || 
-                        (changeFilter === "positive" && crypto.price_change_percentage_24h > 0) || 
-                        (changeFilter === "negative" && crypto.price_change_percentage_24h < 0)) &&
-                    (volumeFilter === "all" || 
-                        (volumeFilter === "high" && volume > 100) || 
-                        (volumeFilter === "medium" && volume >= 10 && volume <= 100) || 
-                        (volumeFilter === "low" && volume < 10))
-                );
+                const isChangeValid =
+                    change === "all" ||
+                    (change === "positive" && crypto.price_change_percentage_24h > 0) ||
+                    (change === "negative" && crypto.price_change_percentage_24h < 0);
+
+                const isVolumeValid =
+                    volume === "all" ||
+                    (volume === "high" && crypto.total_volume > 1e9) ||
+                    (volume === "medium" && crypto.total_volume >= 100e6 && crypto.total_volume <= 1e9) ||
+                    (volume === "low" && crypto.total_volume < 100e6);
+
+                return isCapValid && isChangeValid && isVolumeValid;
             });
-        }
 
-        async function applyFilters() {
-            const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50");
-            const data = await response.json();
-            const filteredData = filterData(data);
             updateTable(filteredData);
         }
 
-        // Event listeners for filters
-        document.getElementById("market-cap-filter").addEventListener("change", applyFilters);
-        document.getElementById("change-filter").addEventListener("change", applyFilters);
-        document.getElementById("volume-filter").addEventListener("change", applyFilters);
+        document.getElementById("market-cap-filter").addEventListener("change", filterData);
+        document.getElementById("change-filter").addEventListener("change", filterData);
+        document.getElementById("volume-filter").addEventListener("change", filterData);
 
-        // Initial fetch
         fetchCryptos();
     </script>
 </body>
